@@ -112,7 +112,11 @@ function parseLogs(logs) {
   if (!logs.trim()) return result;
   
   const lines = logs.trim().split('\n').slice(-50);
+  // Usar timezone UTC para bater com logs ISO
   const today = new Date().toISOString().split('T')[0];
+  
+  console.log('Logs recebidos:', logs.substring(0, 200));
+  console.log('Today (UTC):', today);
   
   lines.forEach(line => {
     const parts = line.split(' | ').map(p => p.trim());
@@ -123,7 +127,13 @@ function parseLogs(logs) {
     const dateObj = new Date(timestamp);
     const time = timestamp.split('T')[1]?.split('.')[0]?.slice(0, 5) || '--:--';
     const date = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-    const isToday = timestamp.startsWith(today);
+    const logDate = timestamp.split('T')[0];
+    // Comparar datas no formato ISO (YYYY-MM-DD)
+    const isToday = logDate === today;
+    
+    console.log(`Log: ${agenteUpper}, timestamp: ${timestamp}, logDate: ${logDate}, today: ${today}, isToday: ${isToday}`);
+    
+    console.log(`Log: ${agenteUpper}, ${timestamp}, isToday: ${isToday}`);
     
     if (result[agenteUpper.toLowerCase()]) {
       result[agenteUpper.toLowerCase()].status = status;
@@ -135,6 +145,7 @@ function parseLogs(logs) {
       }
     }
     
+    // Adicionar ao histórico (últimas 5 tarefas de hoje)
     if (result.history.length < 5 && isToday) {
       const icon = getIcon(agenteUpper, tarefa);
       result.history.push({
@@ -148,6 +159,7 @@ function parseLogs(logs) {
     }
   });
   
+  console.log('History result:', result.history);
   return result;
 }
 
@@ -188,16 +200,25 @@ function formatActivity(tasks) {
 }
 
 function getMockData() {
+  // Fallback com dados mockados INCLUINDO histórico
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const timeStr = today.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  
   return {
     agentes: [
-      { name: 'ARIA', role: 'Head of Operations', avatar: '👤', status: 'online', tasksToday: 3, successRate: '98%', lastTask: 'Relatório enviado', lastTaskTime: '17:56', lastTaskDate: '16/04' },
-      { name: 'ARIS', role: 'Social Media Specialist', avatar: '📱', status: 'idle', tasksToday: 1, successRate: '100%', lastTask: 'Post criado', lastTaskTime: '14:30', lastTaskDate: '16/04' },
-      { name: 'ARCH', role: 'Programador', avatar: '💻', status: 'online', tasksToday: 1, successRate: '--', lastTask: 'Script criado', lastTaskTime: '17:57', lastTaskDate: '16/04' }
+      { name: 'ARIA', role: 'Head of Operations', avatar: '👤', status: 'online', tasksToday: 3, successRate: '98%', lastTask: 'Relatório enviado', lastTaskTime: '17:56', lastTaskDate: dateStr },
+      { name: 'ARIS', role: 'Social Media Specialist', avatar: '📱', status: 'idle', tasksToday: 1, successRate: '100%', lastTask: 'Post criado', lastTaskTime: '14:30', lastTaskDate: dateStr },
+      { name: 'ARCH', role: 'Programador', avatar: '💻', status: 'online', tasksToday: 1, successRate: '--', lastTask: 'Script criado', lastTaskTime: '17:57', lastTaskDate: dateStr }
     ],
     cronJobs: [
-      { job: 'Mini Análise Diária Acnase', status: 'success', result: 'Relatório gerado', time: '12:00', date: '16/04' }
+      { job: 'Mini Análise Diária Acnase', status: 'success', result: 'Relatório gerado', time: '12:00', date: dateStr }
     ],
-    history: [],
+    history: [
+      { icon: '📊', title: 'Apresentação IA criada', agent: 'ARIA', time: '17:56', date: dateStr, status: 'success' },
+      { icon: '📊', title: 'Dashboard corrigido', agent: 'ARIA', time: '17:56', date: dateStr, status: 'success' },
+      { icon: '💻', title: 'Script criado', agent: 'ARCH', time: '17:57', date: dateStr, status: 'success' }
+    ],
     metrics: { agentsOnline: 2, tasksToday: 5, successRate: '98%', activityToday: '5 tarefas hoje' },
     lastUpdate: new Date().toISOString()
   };
