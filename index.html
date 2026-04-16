@@ -14,7 +14,6 @@
       --ar-gray: #6B6B6B;
       --ar-light: #F5F2EF;
       --ar-white: #FFFFFF;
-      --ar-purple: #4A0563;
       --ar-green: #2ECC71;
       --ar-yellow: #F0A500;
       --ar-red: #E74C3C;
@@ -40,14 +39,8 @@
       border: 1px solid #E8E3DE;
     }
 
-    .logo-container {
-      margin-bottom: 20px;
-    }
-
-    .logo-svg {
-      height: 40px;
-      width: auto;
-    }
+    .logo-container { margin-bottom: 20px; }
+    .logo-svg { height: 40px; width: auto; }
 
     .header h1 {
       font-family: 'Poppins', sans-serif;
@@ -57,7 +50,6 @@
     }
 
     .header h1 .ar { color: var(--ar-orange); }
-
     .header p { color: var(--ar-gray); font-size: 14px; }
 
     .last-update {
@@ -176,10 +168,7 @@
       margin-bottom: 4px;
     }
 
-    .agent-role {
-      font-size: 13px;
-      color: var(--ar-gray);
-    }
+    .agent-role { font-size: 13px; color: var(--ar-gray); }
 
     .status-badge {
       display: inline-flex;
@@ -235,6 +224,50 @@
       margin-bottom: 4px;
     }
 
+    /* Cron Jobs Section */
+    .cron-section {
+      background: var(--ar-white);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid #E8E3DE;
+      margin-bottom: 32px;
+    }
+
+    .cron-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .cron-item {
+      background: var(--ar-light);
+      border-radius: 8px;
+      padding: 16px;
+      border-left: 4px solid var(--ar-gray);
+    }
+
+    .cron-item.success { border-left-color: var(--ar-green); }
+    .cron-item.failed { border-left-color: var(--ar-red); }
+    .cron-item.pending { border-left-color: var(--ar-yellow); }
+
+    .cron-job {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .cron-status {
+      font-size: 12px;
+      color: var(--ar-gray);
+    }
+
+    .cron-time {
+      font-size: 12px;
+      color: var(--ar-orange);
+      margin-top: 4px;
+    }
+
     .history-list {
       background: var(--ar-white);
       border-radius: 12px;
@@ -266,7 +299,7 @@
     .history-content { flex: 1; }
     .history-title { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
     .history-meta { font-size: 12px; color: var(--ar-gray); }
-    .history-cost { font-family: 'Poppins', sans-serif; font-weight: 700; color: var(--ar-orange); font-size: 14px; }
+    .history-date { font-size: 12px; color: var(--ar-orange); }
 
     .footer {
       margin-top: 40px;
@@ -337,25 +370,27 @@
       <div class="metric-sub">online agora</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Tarefas Hoje</div>
-      <div class="metric-value" id="tasks-today">--</div>
+      <div class="metric-label">Atividade Hoje</div>
+      <div class="metric-value" id="activity-today">--</div>
       <div class="metric-sub" id="success-rate">--</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Custo Acumulado</div>
-      <div class="metric-value" id="total-cost">--</div>
-      <div class="metric-sub">este mês</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Tokens Usados</div>
-      <div class="metric-value" id="total-tokens">--</div>
-      <div class="metric-sub">hoje</div>
+      <div class="metric-label">Cron Jobs</div>
+      <div class="metric-value" id="cron-status">--</div>
+      <div class="metric-sub">última execução</div>
     </div>
   </div>
 
   <h2 class="section-title">Agentes</h2>
   <div class="agents-grid" id="agents-container">
     <div class="agent-card">Carregando...</div>
+  </div>
+
+  <h2 class="section-title">Cron Jobs</h2>
+  <div class="cron-section">
+    <div class="cron-grid" id="cron-container">
+      <div class="cron-item">Carregando...</div>
+    </div>
   </div>
 
   <h2 class="section-title">Histórico Recente</h2>
@@ -415,24 +450,35 @@ async function loadDashboard() {
             <span class="stat-label">Taxa de Sucesso</span>
             <span class="stat-value">${agent.successRate || '--'}</span>
           </div>
-          <div class="stat-row">
-            <span class="stat-label">Tokens (hoje)</span>
-            <span class="stat-value">${agent.tokensUsed || '0'}</span>
-          </div>
         </div>
         <div class="last-task">
           <strong>Última Tarefa</strong>
-          ${agent.lastTask || 'Sem dados'} • ${agent.lastTaskTime || '--:--'}
+          ${agent.lastTask || 'Sem dados'} • ${agent.lastTaskTime || '--:--'} (${agent.lastTaskDate || '--/--'})
         </div>
       </div>
     `).join('');
     
     // Render metrics
     document.getElementById('total-agents').textContent = online;
-    document.getElementById('tasks-today').textContent = totalTasks;
-    document.getElementById('success-rate').textContent = '98% sucesso';
-    document.getElementById('total-cost').textContent = data.metrics?.costMonth ? `$${data.metrics.costMonth.toFixed(2)}` : '$12.50';
-    document.getElementById('total-tokens').textContent = data.metrics?.tokensToday || '58.0k';
+    document.getElementById('activity-today').textContent = data.metrics?.activityToday || 'Sem atividade';
+    document.getElementById('success-rate').textContent = data.metrics?.successRate || '--';
+    
+    // Render cron jobs
+    if (data.cronJobs && data.cronJobs.length > 0) {
+      const lastCron = data.cronJobs[0];
+      document.getElementById('cron-status').textContent = lastCron.status === 'success' ? '✅ OK' : '⚠️ ' + lastCron.status;
+      
+      document.getElementById('cron-container').innerHTML = data.cronJobs.map(job => `
+        <div class="cron-item ${job.status}">
+          <div class="cron-job">${job.job}</div>
+          <div class="cron-status">${job.result}</div>
+          <div class="cron-time">${job.date} às ${job.time}</div>
+        </div>
+      `).join('');
+    } else {
+      document.getElementById('cron-status').textContent = '--';
+      document.getElementById('cron-container').innerHTML = '<div class="cron-item">Nenhum cron job registrado</div>';
+    }
     
     // Render history
     if (data.history && data.history.length > 0) {
@@ -442,8 +488,8 @@ async function loadDashboard() {
           <div class="history-content">
             <div class="history-title">${item.title}</div>
             <div class="history-meta">${item.agent} • ${item.time}</div>
+            <div class="history-date">${item.date}</div>
           </div>
-          <div class="history-cost">${item.cost || '$0.05'}</div>
         </div>
       `).join('');
     } else {
